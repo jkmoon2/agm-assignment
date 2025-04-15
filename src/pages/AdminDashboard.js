@@ -1,36 +1,45 @@
-// src/pages/AdminDashboard.js
-import React from "react";
-import { useNavigate, Outlet } from "react-router-dom";
+import React, { useState } from "react";
+import StrokeModeApp from "../StrokeModeApp";
+import AGMForBallModeApp from "../AGMForBallModeApp";
 
 const AdminDashboard = () => {
-  const navigate = useNavigate();
-
-  // 드롭다운에서 스트로크/AGM포볼 선택
-  const handleModeChange = (e) => {
-    const val = e.target.value;
-    if (val === "stroke") {
-      navigate("stroke"); // /admin/stroke 로 이동
-    } else if (val === "agm") {
-      navigate("agm");    // /admin/agm 로 이동
-    }
-  };
+  const [mode, setMode] = useState("stroke");
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>관리자 대시보드</h1>
-
-      {/* 모드 선택 드롭다운 */}
-      <div style={{ marginBottom: 20 }}>
-        <label style={{ marginRight: 10 }}>모드 선택: </label>
-        <select onChange={handleModeChange} defaultValue="">
-          <option value="">-- 선택 --</option>
-          <option value="stroke">스트로크 모드</option>
-          <option value="agm">AGM포볼 모드</option>
-        </select>
+    <div style={{ textAlign: "center" }}>
+      <h2 style={{ marginBottom: "20px" }}>관리자 대시보드</h2>
+      
+      {/* 토글 버튼: 스트로크 or AGM */}
+      <div style={{ marginBottom: "20px" }}>
+        <button
+          onClick={() => setMode("stroke")}
+          style={{
+            padding: "10px 20px",
+            marginRight: "10px",
+            backgroundColor: mode === "stroke" ? "#4CAF50" : "#ccc",
+            border: "none",
+            cursor: "pointer",
+            color: mode === "stroke" ? "#fff" : "#000"
+          }}
+        >
+          스트로크 방식
+        </button>
+        <button
+          onClick={() => setMode("agm")}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: mode === "agm" ? "#4CAF50" : "#ccc",
+            border: "none",
+            cursor: "pointer",
+            color: mode === "agm" ? "#fff" : "#000"
+          }}
+        >
+          AGM 포볼 방식
+        </button>
       </div>
 
-      {/* 하위 라우트 (StrokeModeApp 또는 AGMForBallModeApp) */}
-      <Outlet />
+      {mode === "stroke" && <StrokeModeApp />}
+      {mode === "agm" && <AGMForBallModeApp />}
     </div>
   );
 };

@@ -1,70 +1,65 @@
-// src/App.js
-
+/* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
 import React from "react";
 import { BrowserRouter as Router, Route, Routes, Link } from "react-router-dom";
-import AdminLogin from "./pages/AdminLogin";
+import { useAuth0 } from "@auth0/auth0-react";
+
+// 관리자 대시보드
 import AdminDashboard from "./pages/AdminDashboard";
-import AdminDashboardCommon from "./pages/AdminDashboardCommon";
-import StrokeModeApp from "./StrokeModeApp";
-import AGMForBallModeApp from "./AGMForBallModeApp";
-import UserPage from "./pages/UserPage";
-// Auth0 관련 컴포넌트 (별도로 src/components에 생성)
+
+// Auth0 관련 컴포넌트
 import LoginButton from "./components/LoginButton";
 import LogoutButton from "./components/LogoutButton";
 import Profile from "./components/Profile";
+import PrivateRoute from "./components/PrivateRoute";
 
 function App() {
+  const { isAuthenticated, user } = useAuth0();
+
+  // 관리자 이메일
+  const adminEmail = "moonddol3412@msn.com";
+  const isAdmin = isAuthenticated && user && user.email === adminEmail;
+
   return (
     <Router>
       <div style={{ padding: 20 }}>
-        {/* 상단 내비게이션 (관리자 로그인, 사용자 페이지) */}
-        <nav style={{ marginBottom: 20 }}>
-          <Link to="/adminlogin" style={{ marginRight: 10 }}>
-            관리자 로그인
-          </Link>
-          <Link to="/user" style={{ marginRight: 10 }}>
-            사용자 페이지
-          </Link>
-        </nav>
-        
-        {/* Auth0 로그인/로그아웃 및 프로필 영역 */}
-        <header
-          style={{
-            marginBottom: 20,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "flex-end",
-          }}
-        >
-          {/* 사용자가 로그인된 경우 프로필 정보 표시 */}
+        {/* 상단 헤더: 오직 우측에 로그인/로그아웃 + 프로필 */}
+        <header style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", marginBottom: "20px" }}>
           <Profile />
           <div style={{ marginLeft: 10 }}>
-            {/* 사용자가 로그인되지 않은 경우에는 LoginButton, 
-                로그인되어 있다면 LogoutButton을 조건부로 렌더링할 수도 있으나,
-                여기서는 두 버튼을 모두 보여주는 예시입니다. */}
-            <LoginButton />
-            <LogoutButton />
+            {!isAuthenticated && <LoginButton />}
+            {isAuthenticated && <LogoutButton />}
           </div>
         </header>
-        
+
+        {/* 관리자라면 "Admin Dashboard" 링크 우측 상단 표시 */}
+        {isAuthenticated && isAdmin && (
+          <div style={{ textAlign: "right", marginBottom: 20 }}>
+            <Link to="/admin" style={{ fontSize: "16px" }}>
+              Admin Dashboard
+            </Link>
+          </div>
+        )}
+
         <Routes>
-          {/* 관리자 로그인 */}
-          <Route path="/adminlogin" element={<AdminLogin />} />
-
-          {/* 관리자 대시보드 (로그인 후 직접 /admin으로 이동) */}
-          <Route path="/admin" element={<AdminDashboard />}>
-            {/* 하위 라우트들 */}
-            <Route path="common" element={<AdminDashboardCommon />} />
-            <Route path="stroke" element={<StrokeModeApp />} />
-            <Route path="agm" element={<AGMForBallModeApp />} />
-            <Route index element={<AdminDashboardCommon />} />
-          </Route>
-
-          {/* 사용자 페이지 */}
-          <Route path="/user" element={<UserPage />} />
-
-          {/* 기본 라우트 */}
-          <Route path="/" element={<div><h1>AGM 프로그램 웹앱</h1></div>} />
+          {/* 관리자 대시보드 (PrivateRoute) */}
+          <Route
+            path="/admin"
+            element={
+              <PrivateRoute adminRequired={true}>
+                <AdminDashboard />
+              </PrivateRoute>
+            }
+          />
+          {/* 홈 화면: 중앙 정렬 */}
+          <Route
+            path="/"
+            element={
+              <div style={{ textAlign: "center" }}>
+                <h1>AGM 프로그램 웹앱</h1>
+                <p>오른쪽 상단의 로그인 버튼을 클릭해 주세요.</p>
+              </div>
+            }
+          />
         </Routes>
       </div>
     </Router>
