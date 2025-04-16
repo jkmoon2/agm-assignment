@@ -1,0 +1,12 @@
+/* 예: src/styles/Responsive.css */
+@media (max-width: 600px) {
+    .center-container {
+      padding: 10px;
+    }
+    .input-field {
+      width: 90%;
+      font-size: 14px;
+    }
+    /* 추가적 수정 */
+  }
+  
