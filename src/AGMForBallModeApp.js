@@ -290,7 +290,7 @@ function AGMForBallModeApp() {
             return acc + sc;
           }, 0);
           return (
-            <div key={i} style={{ border: "1px solid #aaa", padding: 10, marginBottom: 10 }}>
+            <div key={i} style={{ display: 'inline-block', border: '1px solid #aaa', padding: 10, margin: 10, textAlign: 'left' }}>
               <strong>
                 {label} (총점: {sum})
               </strong>
@@ -754,7 +754,7 @@ function AGMForBallModeApp() {
       </div>
 
       {/* 방 이름 수정 및 숨김 토글 */}
-      <div style={{ marginBottom: 20, fontSize: "18px" }}>
+      <div style={{ marginBottom: 20, fontSize: "18px", display: "flex", flexDirection: "column", alignItems: "center" }}>
         <h3>🏷 방 이름 수정</h3>
         {roomLabels.map((label, i) => (
           <div
@@ -784,7 +784,7 @@ function AGMForBallModeApp() {
       </div>
 
       {/* 참가자 입력 */}
-      <div style={{ fontSize: "18px" }}>
+      <div style={{ fontSize: "18px", display: "flex", flexDirection: "column", alignItems: "center" }}>
         <h3>👥 참가자 입력 (조: 1이면 1조, 2이면 2조)</h3>
         {participants.map((p, i) => {
           const isGroup1 = p.group === 1;
@@ -853,7 +853,7 @@ function AGMForBallModeApp() {
       </div>
 
       {/* 하단 표 출력 영역 */}
-      <div style={{ marginTop: 30, fontSize: "18px" }}>
+      <div style={{ marginTop: 30, fontSize: "18px", textAlign: 'center' }}>
         <h3>📊 추가 출력 (표)</h3>
         <div style={{ marginBottom: 10 }}>
           <button onClick={() => setTableView("allocation")} style={{ fontSize: "16px", marginRight: 6 }}>

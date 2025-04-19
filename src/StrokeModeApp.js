@@ -780,7 +780,7 @@ function App() {
       </div>
 
       {/* 방 이름 수정 / 숨김 */}
-      <div style={{ marginBottom: 20, fontSize: '18px' }}>
+      <div style={{ marginBottom: 20, fontSize: '18px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <h3>🏷 방 이름 수정</h3>
         {roomLabels.map((label, i) => {
           const currentCount = assigned[i] ? assigned[i].filter(p => p && p.name).length : 0;
@@ -811,7 +811,7 @@ function App() {
       </div>
 
       {/* 참가자 입력 */}
-      <div style={{ fontSize: '18px' }}>
+      <div style={{ fontSize: '18px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <h3>👥 참가자 입력</h3>
         {participants.map((p, i) => (
           <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 3 }}>
@@ -863,12 +863,12 @@ function App() {
       </div>
 
       {/* 방 배정 결과 (간단 합계) */}
-      <div style={{ marginTop: 30, fontSize: '18px' }}>
+      <div style={{ marginTop: 30, fontSize: '18px', textAlign: 'center' }}>
         <h3>🏠 방 배정 결과 (간단 합계)</h3>
         {roomLabels.map((label, i) => {
           if (hiddenRooms[String(i)]) return null;
           return (
-            <div key={i} style={{ border: '1px solid #aaa', padding: 10, marginBottom: 10 }}>
+            <div key={i} style={{ display: 'inline-block', border: '1px solid #aaa', padding: 10, margin: 10, textAlign: 'left' }}>
               <strong>{label} (총점: {calculateRoomTotal(assigned[i])})</strong>
               <ul style={{ marginTop: 5 }}>
                 {(assigned[i] || []).map((p, idx) => {
