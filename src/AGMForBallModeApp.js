@@ -301,8 +301,7 @@ function AGMForBallModeApp() {
                     const r = sc - Number(p.ghandi || 0);
                     return (
                       <li key={idx}>
-                        {p.name} | 조: {p.group} | G핸디: {p.ghandi} | 스코어: {sc >= 0 ? "+" + sc : sc} | 결과:{" "}
-                        {r >= 0 ? "+" + r : r}
+                        {p.name} | 조: {p.group} | G핸디: {p.ghandi} | 스코어: {sc >= 0 ? "+" + sc : sc} | 결과: {r >= 0 ? "+" + r : r}
                       </li>
                     );
                   })
@@ -318,7 +317,7 @@ function AGMForBallModeApp() {
   }
 
   // ---------------------------
-  // 방배정표 (푸터 부분만 수정)
+  // 방배정표 (푸터 부분에서 G핸디 합계 로직 수정)
   // ---------------------------
   function renderAllocationTable() {
     return (
@@ -345,8 +344,8 @@ function AGMForBallModeApp() {
                 if (hiddenRooms[i]) return null;
                 return (
                   <React.Fragment key={i}>
-                    <th style={headerStyle}>닉네임</th>
-                    <th style={headerStyle}>G핸디</th>
+                    <th style={{ ...headerStyle, width: colWidths.nickname }}>닉네임</th>
+                    <th style={{ ...headerStyle, width: colWidths.small }}>G핸디</th>
                   </React.Fragment>
                 );
               })}
@@ -376,10 +375,8 @@ function AGMForBallModeApp() {
               {roomLabels.map((label, i) => {
                 if (hiddenRooms[i]) return null;
                 const arr = roomAssignments[i] || [];
-                const sum = arr.reduce((acc, p) => {
-                  const sc = Number(scores[p.name] || 0) - Number(p.ghandi || 0);
-                  return acc + sc;
-                }, 0);
+                // 수정된 합계: 순수 G핸디 값만 합산
+                const sum = arr.reduce((acc, p) => acc + Number(p.ghandi || 0), 0);
                 return (
                   <React.Fragment key={i}>
                     <td style={{ ...footerStyle, textAlign: "center", color: "black" }}>
