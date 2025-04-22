@@ -6,101 +6,28 @@
 import React, { useState, useEffect } from 'react';
 import * as XLSX from 'xlsx';
 
-// ==============================================
-// [1] 안전한 숫자 변환 함수
-//     -> 입력된 값이 숫자로 변환되지 않으면 0을 반환합니다.
-// ==============================================
-function toNumberSafe(val) {
-  const num = Number(val);
-  return isNaN(num) ? 0 : num;
-}
+// 분리된 컴포넌트들
+import { ControlPanel } from './components/ControlPanel';
+import { AllocationTable } from './components/AllocationTable';
+import { ResultTable } from './components/ResultTable';
 
-// ==============================================
-// [2] 인라인 스타일 정의
-// ==============================================
-const tableContainerStyle = {
-  overflowX: 'auto',
-  marginTop: '20px',
-  marginBottom: '20px',
-};
-
-const tableStyle = {
-  borderCollapse: 'collapse',
-  width: '100%',
-  tableLayout: 'fixed',
-};
-
-const baseCellStyle = {
-  border: '1px solid #ccc',
-  padding: '8px',
-  textAlign: 'center',
-  whiteSpace: 'nowrap',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-};
-
-const headerStyle = {
-  ...baseCellStyle,
-  backgroundColor: '#f0f0f0',
-  fontWeight: 'bold',
-  fontSize: '18px',
-};
-
-const footerStyle = {
-  ...baseCellStyle,
-  backgroundColor: '#e8e8e8',
-  fontWeight: 'bold',
-};
-
-const rankNumberStyle = {
-  color: 'blue',
-  fontWeight: 'bold',
-  fontSize: '18px',
-};
-
-const rankLabelStyle = {
-  color: 'blue',
-  fontWeight: 'bold',
-  fontSize: '18px',
-};
-
-// 닉네임 열 폭: 160px, 나머지 작은 열 폭: 30px
-const colWidths = {
-  nickname: 160,
-  small: 30,
-};
-
-// ==============================================
-// [3] 글자 길이에 따라 폰트 크기 자동 조절 함수
-// ==============================================
-function fitFontSize(text = "", maxLen = 6, baseSize = 18, minSize = 14) {
-  if (text.length <= maxLen) return { fontSize: `${baseSize}px` };
-  const ratio = maxLen / text.length;
-  const newSize = Math.max(minSize, Math.floor(baseSize * ratio));
-  return { fontSize: `${newSize}px` };
-}
-
-// ==============================================
-// [4] G핸디 표시 함수
-//     -> 값이 0이면 "0"으로, 아니면 그대로 출력합니다.
-// ==============================================
-function displayGhandi(val) {
-  return toNumberSafe(val) === 0 ? "0" : val;
-}
-
-// ==============================================
-// [5] getScore 함수
-//     -> 참가자의 이름을 소문자 + trim 하여, scores 객체에서 점수를 가져옵니다.
-//     -> (사용되지 않아도 에러는 아니므로 남겨둠.)
-// ==============================================
-function getScore(name, scores) {
-  const key = name ? name.trim().toLowerCase() : "";
-  return toNumberSafe(scores[key]);
-}
+// 공통 스타일 & 헬퍼 함수 import
+import {
+  tableContainerStyle,
+  tableStyle,
+  baseCellStyle,
+  headerStyle,
+  footerStyle,
+  colWidths
+} from './utils/styles';
+import {
+  toNumberSafe,
+  fitFontSize,
+  displayGhandi
+} from './utils/helpers';
 
 // ==============================================
 // [6] RoomAllocationTable
-//     -> 각 방에 배정된 참가자들과 G핸디 합계를 출력하는 표
 // ==============================================
 function RoomAllocationTable({ rooms, roomLabels, hiddenRooms }) {
   const allRooms = Array.from({ length: roomLabels.length }, (_, i) => String(i));
@@ -189,7 +116,6 @@ function RoomAllocationTable({ rooms, roomLabels, hiddenRooms }) {
 
 // ==============================================
 // [7] FinalResultTable
-//     -> (반땅 계산 + 순위) + "방별 표시/숨김" + "스코어/반땅 표시" 옵션
 // ==============================================
 function FinalResultTable({
   rooms,
@@ -203,116 +129,72 @@ function FinalResultTable({
   setShowBanddang,
 }) {
   const rowCount = 4;
-  const allRooms = Array.from({ length: roomLabels.length }, (_, i) => String(i));
-  const visibleRooms = allRooms.filter(r => !hiddenRooms[r]);
-
-  // ------- "배열" 방식의 roomData 생성 (기존: 객체 방식 -> iterable 오류)
-  // roomData = [
-  //   { roomIndex: 0, finalScores: [...], total: X, banddangSum: Y, ghandiSum: Z, rank: ? },
-  //   ...
-  // ]
   const roomData = [];
+
   for (let i = 0; i < roomLabels.length; i++) {
-    if (hiddenRooms[i]) continue; // 숨김 방 제외
+    if (hiddenRooms[i]) continue;
     const arr = rooms[i] || [];
-    // 각 방의 4명 정보를 보완
-    const completeArr = Array.from({ length: rowCount }, (_, idx) => arr[idx] || { group: "", name: "", ghandi: "" });
-    // 최고 스코어(반땅 대상) 찾기
-    let highestIndex = -1;
-    let highestScore = -Infinity;
-    let banddangSum = 0;
-    let total = 0;
-    let ghandiSum = 0;
+    const completeArr = [...Array(rowCount)].map((_, idx) => arr[idx] || { group: "", name: "", ghandi: "" });
+    let highestIndex = -1, highestScore = -Infinity;
+    let ghandiSum = 0, total = 0;
 
     const finalScores = completeArr.map((p, idx) => {
-      const sc = toNumberSafe(scores[p?.name?.trim().toLowerCase()] || 0);
-      if (sc > highestScore) {
-        highestScore = sc;
-        highestIndex = idx;
-      }
+      const sc = toNumberSafe(scores[p.name?.trim().toLowerCase()] || 0);
+      if (sc > highestScore) { highestScore = sc; highestIndex = idx; }
       return { p, sc, banddang: 0, result: 0 };
     });
 
-    // ghandi 합산
-    finalScores.forEach(fs => {
-      ghandiSum += toNumberSafe(fs.p.ghandi);
-    });
-
-    // 반땅 적용 및 total 계산
+    finalScores.forEach(fs => { ghandiSum += toNumberSafe(fs.p.ghandi); });
     finalScores.forEach((fs, idx) => {
       fs.bandang = (idx === highestIndex && showBanddang) ? Math.floor(fs.sc * 0.5) : fs.sc;
       fs.result = fs.bandang - toNumberSafe(fs.p.ghandi);
-      banddangSum += fs.bandang;
       total += fs.result;
     });
 
-    roomData.push({
-      roomIndex: i,
-      finalScores,
-      banddangSum,
-      total,
-      ghandiSum,
-    });
+    roomData.push({ roomIndex: i, finalScores, total, ghandiSum });
   }
 
-  // DEBUG
-  console.log("DEBUG: FinalResultTable roomData (array) =", roomData);
-
-  // ------- 순위 산출 (총결과 오름차순, 동점이면 ghandiSum 낮은 순)
-  const sorted = [...roomData].sort((a, b) => {
-    const diff = a.total - b.total;
-    if (diff !== 0) return diff;
-    return a.ghandiSum - b.ghandiSum;
-  });
-  sorted.forEach((item, idx) => {
-    item.rank = idx + 1;
-  });
-
-  // roomData 배열의 순서를 (roomIndex 오름차순)으로 되돌림
+  // 순위 매기기
+  const sorted = [...roomData].sort((a, b) => a.total !== b.total ? a.total - b.total : a.ghandiSum - b.ghandiSum);
+  sorted.forEach((r, idx) => r.rank = idx + 1);
   roomData.sort((a, b) => a.roomIndex - b.roomIndex);
-  // rank 다시 주입
   roomData.forEach(rd => {
     const found = sorted.find(s => s.roomIndex === rd.roomIndex);
-    rd.rank = found ? found.rank : null;
+    rd.rank = found?.rank;
   });
 
-  const formatNum = (num) => (num >= 0 ? `+${num}` : `${num}`);
+  const formatNum = n => n >= 0 ? `+${n}` : `${n}`;
 
   return (
     <div style={tableContainerStyle}>
-      {/* ───── (추가) 방별 표시/숨김, 스코어/반땅 옵션 ───── */}
-      <div style={{ marginBottom: '10px', fontSize: '16px' }}>
+      <div style={{ marginBottom: 10, fontSize: 16 }}>
         <h4>🕵️ 방별 표시/숨김</h4>
         {roomLabels.map((label, i) => (
-          <label key={i} style={{ marginRight: '10px' }}>
+          <label key={i} style={{ marginRight: 10 }}>
             <input
               type="checkbox"
-              checked={!hiddenRooms[String(i)]}
-              onChange={() => toggleRoomVisibility(String(i))}
-            />
-            {label}
+              checked={!hiddenRooms[i]}
+              onChange={() => toggleRoomVisibility(i)}
+            />{label}
           </label>
         ))}
-        <div style={{ marginTop: '10px' }}>
-          <label style={{ marginRight: '10px' }}>
+        <div style={{ marginTop: 10 }}>
+          <label style={{ marginRight: 10 }}>
             <input
               type="checkbox"
               checked={showScore}
-              onChange={(e) => setShowScore(e.target.checked)}
-            />
-            스코어 표시
+              onChange={e => setShowScore(e.target.checked)}
+            />스코어
           </label>
           <label>
             <input
               type="checkbox"
               checked={showBanddang}
-              onChange={(e) => setShowBanddang(e.target.checked)}
-            />
-            반땅 표시
+              onChange={e => setShowBanddang(e.target.checked)}
+            />반땅
           </label>
         </div>
       </div>
-      {/* ───── 테이블 시작 ───── */}
       <table style={tableStyle}>
         <thead>
           <tr>
@@ -322,7 +204,7 @@ function FinalResultTable({
                 <th
                   key={rd.roomIndex}
                   colSpan={colCount}
-                  style={{ ...headerStyle, width: colWidths.nickname + 4 * colWidths.small }}
+                  style={{ ...headerStyle, width: colWidths.nickname + colWidths.small * colCount }}
                 >
                   {roomLabels[rd.roomIndex]}
                 </th>
@@ -332,58 +214,33 @@ function FinalResultTable({
           <tr>
             {roomData.map(rd => (
               <React.Fragment key={rd.roomIndex}>
-                <th style={{ ...headerStyle, width: colWidths.nickname }}>닉네임</th>
-                <th style={{ ...headerStyle, width: colWidths.small }}>G핸디</th>
-                {showScore && <th style={{ ...headerStyle, width: colWidths.small }}>스코어</th>}
-                {showBanddang && <th style={{ ...headerStyle, width: colWidths.small }}>반땅</th>}
-                <th style={{ ...headerStyle, width: colWidths.small }}>결과</th>
+                <th style={headerStyle}>닉네임</th>
+                <th style={headerStyle}>G핸디</th>
+                {showScore && <th style={headerStyle}>스코어</th>}
+                {showBanddang && <th style={headerStyle}>반땅</th>}
+                <th style={headerStyle}>결과</th>
               </React.Fragment>
             ))}
           </tr>
         </thead>
         <tbody>
-          {Array.from({ length: 4 }).map((_, rowIndex) => (
-            <tr key={rowIndex}>
+          {Array.from({ length: 4 }).map((_, ri) => (
+            <tr key={ri}>
               {roomData.map(rd => {
-                const fs = rd.finalScores[rowIndex];
+                const fs = rd.finalScores[ri];
                 const colCount = 2 + (showScore ? 1 : 0) + (showBanddang ? 1 : 0) + 1;
                 if (!fs) {
-                  // 이 인덱스에 참가자 없음 -> 빈 셀
-                  return (
-                    <React.Fragment key={rd.roomIndex + "-" + rowIndex}>
-                      {Array.from({ length: colCount }).map((_, c) => (
-                        <td key={c} style={baseCellStyle}></td>
-                      ))}
-                    </React.Fragment>
-                  );
+                  return Array.from({ length: colCount }).map((_, ci) => (
+                    <td key={ci} style={baseCellStyle} />
+                  ));
                 }
                 return (
-                  <React.Fragment key={rd.roomIndex + "-" + rowIndex}>
-                    <td
-                      style={{
-                        ...baseCellStyle,
-                        ...fitFontSize(fs.p.name, 10, 18, 14),
-                        width: colWidths.nickname,
-                      }}
-                    >
-                      {fs.p.name}
-                    </td>
-                    <td style={{ ...baseCellStyle, color: 'black' }}>
-                      {displayGhandi(fs.p.ghandi)}
-                    </td>
-                    {showScore && (
-                      <td style={{ ...baseCellStyle, color: 'black' }}>
-                        {formatNum(fs.sc)}
-                      </td>
-                    )}
-                    {showBanddang && (
-                      <td style={{ ...baseCellStyle, color: 'blue' }}>
-                        {formatNum(fs.bandang)}
-                      </td>
-                    )}
-                    <td style={{ ...baseCellStyle, color: 'red' }}>
-                      {formatNum(fs.result)}
-                    </td>
+                  <React.Fragment key={rd.roomIndex + "-" + ri}>
+                    <td style={{ ...baseCellStyle, ...fitFontSize(fs.p.name, 10) }}>{fs.p.name}</td>
+                    <td style={baseCellStyle}>{displayGhandi(fs.p.ghandi)}</td>
+                    {showScore && <td style={baseCellStyle}>{formatNum(fs.sc)}</td>}
+                    {showBanddang && <td style={{ ...baseCellStyle, color: 'blue' }}>{formatNum(fs.bandang)}</td>}
+                    <td style={{ ...baseCellStyle, color: 'red' }}>{formatNum(fs.result)}</td>
                   </React.Fragment>
                 );
               })}
@@ -391,33 +248,29 @@ function FinalResultTable({
           ))}
         </tbody>
         <tfoot>
-          {/* 1) 합계 (빨간색) */}
           <tr>
             {roomData.map(rd => {
               const colCount = 2 + (showScore ? 1 : 0) + (showBanddang ? 1 : 0) + 1;
               return (
                 <React.Fragment key={rd.roomIndex}>
-                  {Array.from({ length: colCount - 1 }).map((_, c) => (
-                    <td key={c} style={footerStyle}></td>
+                  {Array.from({ length: colCount - 1 }).map((_, ci) => (
+                    <td key={ci} style={footerStyle} />
                   ))}
-                  <td style={{ ...footerStyle, color: "red" }}>
-                    {formatNum(rd.total)}
-                  </td>
+                  <td style={{ ...footerStyle, color: 'red' }}>{formatNum(rd.total)}</td>
                 </React.Fragment>
               );
             })}
           </tr>
-          {/* 2) 순위 (파란색) */}
           <tr>
             {roomData.map(rd => {
               const colCount = 2 + (showScore ? 1 : 0) + (showBanddang ? 1 : 0) + 1;
               return (
                 <React.Fragment key={rd.roomIndex}>
-                  {Array.from({ length: colCount - 1 }).map((_, c) => (
-                    <td key={c} style={footerStyle}></td>
+                  {Array.from({ length: colCount - 1 }).map((_, ci) => (
+                    <td key={ci} style={footerStyle} />
                   ))}
-                  <td style={{ ...footerStyle, color: "blue", fontWeight: "bold" }}>
-                    {rd.rank ? rd.rank + "등" : ""}
+                  <td style={{ ...footerStyle, color: 'blue', fontWeight: 'bold' }}>
+                    {rd.rank}등
                   </td>
                 </React.Fragment>
               );
@@ -432,7 +285,8 @@ function FinalResultTable({
 // ==============================================
 // [8] App 컴포넌트 (전체 통합)
 // ==============================================
-function App() {
+// StrokeModeApp 컴포넌트 (전체 통합)
+function StrokeModeApp() {
   const [topTitle, setTopTitle] = useState("AGM 수동 배정 (반땅룰 적용)");
   const [roomCount, setRoomCount] = useState(4);
   const [participants, setParticipants] = useState([]);
@@ -442,7 +296,6 @@ function App() {
   const [forceResetKey, setForceResetKey] = useState(0);
   const [loadingIndex, setLoadingIndex] = useState(null);
   const [scores, setScores] = useState({});
-  // tableView은 한 번만 선언
   const [tableView, setTableView] = useState("none");
   const [roomLabels, setRoomLabels] = useState([]);
   const [hiddenRooms, setHiddenRooms] = useState({});
@@ -456,9 +309,6 @@ function App() {
     setHiddenRooms({});
   }, [roomCount]);
 
-  // ==============================================
-  // 초기화 함수
-  // ==============================================
   const initParticipants = () => {
     const total = roomCount * 4;
     setParticipants(Array.from({ length: total }, () => ({ group: '', name: '', ghandi: '' })));
@@ -754,33 +604,17 @@ function App() {
       <h1 style={{ fontSize: '24px', margin: '8px 0' }}>{topTitle}</h1>
 
       {/* 제어 영역 */}
-      <div style={{ marginBottom: 10, fontSize: '18px' }}>
-        <label>방 개수: </label>
-        <input
-          type="number"
-          min="1"
-          max="10"
-          value={roomCount}
-          onChange={(e) => setRoomCount(Number(e.target.value))}
-          style={{ width: 50, marginLeft: 6 }}
-        />
-        <input
-          key={uploadKey}
-          type="file"
-          accept=".xlsx"
-          onChange={handleExcelUpload}
-          style={{ marginLeft: 10 }}
-        />
-        <button onClick={autoAssign} style={{ marginLeft: 10, fontSize: '16px' }}>
-          자동배정
-        </button>
-        <button onClick={initParticipants} style={{ marginLeft: 10, fontSize: '16px' }}>
-          클리어
-        </button>
-      </div>
+      <ControlPanel
+  roomCount={roomCount}
+  onRoomCountChange={setRoomCount}
+  uploadKey={uploadKey}
+  onExcelUpload={handleExcelUpload}
+  onAutoAssign={autoAssign}      // Stroke 모드의 자동배정 함수
+  onClear={initParticipants}      // Stroke 모드의 클리어 함수
+/>
 
       {/* 방 이름 수정 / 숨김 */}
-      <div style={{ marginBottom: 20, fontSize: '18px' }}>
+      <div style={{ marginBottom: 20, fontSize: '18px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <h3>🏷 방 이름 수정</h3>
         {roomLabels.map((label, i) => {
           const currentCount = assigned[i] ? assigned[i].filter(p => p && p.name).length : 0;
@@ -811,7 +645,7 @@ function App() {
       </div>
 
       {/* 참가자 입력 */}
-      <div style={{ fontSize: '18px' }}>
+      <div style={{ fontSize: '18px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
         <h3>👥 참가자 입력</h3>
         {participants.map((p, i) => (
           <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 3 }}>
@@ -863,12 +697,12 @@ function App() {
       </div>
 
       {/* 방 배정 결과 (간단 합계) */}
-      <div style={{ marginTop: 30, fontSize: '18px' }}>
+      <div style={{ marginTop: 30, fontSize: '18px', textAlign: 'center' }}>
         <h3>🏠 방 배정 결과 (간단 합계)</h3>
         {roomLabels.map((label, i) => {
           if (hiddenRooms[String(i)]) return null;
           return (
-            <div key={i} style={{ border: '1px solid #aaa', padding: 10, marginBottom: 10 }}>
+            <div key={i} style={{ display: 'inline-block', border: '1px solid #aaa', padding: 10, margin: 10, textAlign: 'left' }}>
               <strong>{label} (총점: {calculateRoomTotal(assigned[i])})</strong>
               <ul style={{ marginTop: 5 }}>
                 {(assigned[i] || []).map((p, idx) => {
@@ -892,14 +726,19 @@ function App() {
       <div style={{ marginTop: 30, fontSize: '18px' }}>
         <h3>📊 추가 출력 (표)</h3>
         <div style={{ marginBottom: 10 }}>
-          <button onClick={() => setTableView("allocation")} style={{ fontSize: '16px' }}>
+          <button
+            onClick={() => setTableView("allocation")}
+            style={{ fontSize: '16px' }}
+          >
             방배정표
           </button>
-          <button onClick={() => setTableView("final")} style={{ fontSize: '16px', marginLeft: '10px' }}>
+          <button
+            onClick={() => setTableView("final")}
+            style={{ fontSize: '16px', marginLeft: '10px' }}
+          >
             최종결과표
           </button>
         </div>
-
         <div style={tableContainerStyle}>
           {tableView === "allocation" && (
             <RoomAllocationTable
@@ -908,7 +747,6 @@ function App() {
               hiddenRooms={hiddenRooms}
             />
           )}
-
           {tableView === "final" && (
             <FinalResultTable
               rooms={assigned}
@@ -928,4 +766,4 @@ function App() {
   );
 }
 
-export default App;
+export default StrokeModeApp;

@@ -3,92 +3,44 @@
 import React, { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 
-// ===== 스타일 정의 (스트로크 방식과 유사) =====
-const containerStyle = { padding: 20 };
-const tableContainerStyle = {
-  overflowX: "auto",
-  marginTop: "20px",
-  marginBottom: "20px"
-};
-const tableStyle = {
-  borderCollapse: "collapse",
-  width: "100%",
-  tableLayout: "fixed"
-};
-const baseCellStyle = {
-  border: "1px solid #ccc",
-  padding: "8px",
-  textAlign: "center",
-  whiteSpace: "nowrap",
-  overflow: "hidden",
-  textOverflow: "ellipsis"
-};
-const headerStyle = {
-  ...baseCellStyle,
-  backgroundColor: "#f0f0f0",
-  fontWeight: "bold",
-  fontSize: "18px"
-};
-const footerStyle = {
-  ...baseCellStyle,
-  backgroundColor: "#e8e8e8",
-  fontWeight: "bold"
-};
-// 예시: 닉네임 열: 160px, 나머지 열: 40px
-const colWidths = {
-  nickname: 160,
-  small: 40
-};
+// 분리된 컴포넌트들
+import { ControlPanel } from './components/ControlPanel';
+import { AllocationTable } from './components/AllocationTable';
+import { ResultTable, TeamResultTable } from './components/ResultTable';
 
-// 글자 길이에 따라 폰트 크기 자동 조절
-function fitFontSize(text = "", maxLen = 10, baseSize = 18, minSize = 14) {
-  if (text.length <= maxLen) return { fontSize: `${baseSize}px` };
-  const ratio = maxLen / text.length;
-  const newSize = Math.max(minSize, Math.floor(baseSize * ratio));
-  return { fontSize: `${newSize}px` };
-}
-function displayGhandi(val) {
-  if (val === 0 || val === "0") return "0";
-  return val;
-}
-// 배열 무작위 섞기
-function shuffle(arr) {
-  if (!arr || arr.length === 0) return [];
-  return arr
-    .map(item => [item, Math.random()])
-    .sort((a, b) => a[1] - b[1])
-    .map(pair => pair[0]);
-}
+// 공통 스타일 & 헬퍼 함수 import
+import {
+  containerStyle,
+  tableContainerStyle,
+  tableStyle,
+  baseCellStyle,
+  headerStyle,
+  footerStyle,
+  colWidths
+} from "./utils/styles";
+import {
+  fitFontSize,
+  displayGhandi,
+  shuffle
+} from "./utils/helpers";
 
 function AGMForBallModeApp() {
-  // 페이지 제목
   const [topTitle, setTopTitle] = useState("AGM 포볼 모드");
-  // 참가자: { group, name, ghandi }
   const [participants, setParticipants] = useState([]);
   const [scores, setScores] = useState({});
-  // 방 개수 (기본 4방, 총 참가자 = roomCount * 4)
   const [roomCount, setRoomCount] = useState(4);
-  // 방 이름 (기본: "1번 방", "2번 방", …)
   const [roomLabels, setRoomLabels] = useState([]);
-  // 방배정 결과: roomAssignments[i] = i번째 방에 배정된 참가자 배열 (최대 4명)
   const [roomAssignments, setRoomAssignments] = useState([]);
-  // 1조 버튼 클릭 상태: { [index]: { room: bool, team: bool } }
   const [buttonClicked, setButtonClicked] = useState({});
-  // 파일 업로드 리셋용 key (클리어 후 재업로드 가능)
   const [uploadKey, setUploadKey] = useState(0);
-  // 하단 표 출력 모드: "none", "allocation", "final", "team"
   const [tableView, setTableView] = useState("none");
-  // 방 숨김 토글 (체크박스로 방별 표시 여부)
   const [hiddenRooms, setHiddenRooms] = useState({});
-  // 최종결과표: 스코어/반땅 표시 토글
   const [showScore, setShowScore] = useState(true);
   const [showBanddang, setShowBanddang] = useState(true);
-  // 버튼 클릭 시 로딩 상태: { idx: 번호, type: "room" 또는 "team" }
   const [loadingIndex, setLoadingIndex] = useState(null);
 
   useEffect(() => {
-    const defaults = Array.from({ length: roomCount }, (_, i) => `${i + 1}번 방`);
-    setRoomLabels(defaults);
+    setRoomLabels(Array.from({ length: roomCount }, (_, i) => `${i + 1}번 방`));
     setRoomAssignments(Array.from({ length: roomCount }, () => []));
     setParticipants(Array(roomCount * 4).fill({ group: "", name: "", ghandi: "" }));
     setScores({});
@@ -100,22 +52,17 @@ function AGMForBallModeApp() {
     setUploadKey(prev => prev + 1);
   }, [roomCount]);
 
-  // ---------------------------
-  // 엑셀 업로드 (엑셀 파일은 group, name, ghandi 순)
-  // ---------------------------
-  const handleExcelUpload = (e) => {
+  const handleExcelUpload = e => {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (evt) => {
-      const bstr = evt.target.result;
-      const wb = XLSX.read(bstr, { type: "binary" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, { header: 1 });
-      const cleaned = data.slice(1).map(row => ({
-        group: Number(row[0] || 0),
-        name: row[1] || "",
-        ghandi: row[2] === 0 ? 0 : (row[2] || "")
+    reader.onload = evt => {
+      const wb = XLSX.read(evt.target.result, { type: "binary" });
+      const data = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1 });
+      const cleaned = data.slice(1).map(r => ({
+        group: Number(r[0] || 0),
+        name: r[1] || "",
+        ghandi: r[2] === 0 ? 0 : (r[2] || "")
       }));
       setParticipants(cleaned);
       setRoomAssignments(Array.from({ length: roomCount }, () => []));
@@ -286,29 +233,28 @@ function AGMForBallModeApp() {
           if (hiddenRooms[i]) return null;
           const arr = roomAssignments[i] || [];
           const sum = arr.reduce((acc, p) => {
-            const sc = Number(scores[p.name] || 0) - Number(p.ghandi || 0);
-            return acc + sc;
+            const sc = Number(scores[p.name] || 0);
+            return acc + (sc - Number(p.ghandi || 0));
           }, 0);
           return (
-            <div key={i} style={{ border: "1px solid #aaa", padding: 10, marginBottom: 10 }}>
-              <strong>
-                {label} (총점: {sum})
-              </strong>
+            <div key={i} style={{
+              display: 'inline-block',
+              border: '1px solid #aaa',
+              padding: 10,
+              margin: 10,
+              textAlign: 'left'
+            }}>
+              <strong>{label} (총점: {sum})</strong>
               <ul style={{ marginTop: 5 }}>
-                {arr.length > 0 ? (
-                  arr.map((p, idx) => {
-                    const sc = Number(scores[p.name] || 0);
-                    const r = sc - Number(p.ghandi || 0);
-                    return (
-                      <li key={idx}>
-                        {p.name} | 조: {p.group} | G핸디: {p.ghandi} | 스코어: {sc >= 0 ? "+" + sc : sc} | 결과:{" "}
-                        {r >= 0 ? "+" + r : r}
-                      </li>
-                    );
-                  })
-                ) : (
-                  <li>아직 없음</li>
-                )}
+                {arr.length ? arr.map((p, idx) => {
+                  const sc = Number(scores[p.name] || 0);
+                  const r = sc - Number(p.ghandi || 0);
+                  return (
+                    <li key={idx}>
+                      {p.name} | 조: {p.group} | G핸디: {p.ghandi} | 스코어: {sc >= 0 ? "+"+sc : sc} | 결과: {r >= 0 ? "+"+r : r}
+                    </li>
+                  );
+                }) : <li>아직 없음</li>}
               </ul>
             </div>
           );
@@ -317,13 +263,13 @@ function AGMForBallModeApp() {
     );
   }
 
-  // ---------------------------
-  // 방배정표 (푸터 부분만 수정)
-  // ---------------------------
+  // ----------------------------
+  // 수정된 부분: G핸디 순수 합산
+  // ----------------------------
   function renderAllocationTable() {
     return (
       <div style={tableContainerStyle}>
-        <h3>방배정표 (스트로크 방식)</h3>
+        <h3>방배정표 (AGM 포볼 모드)</h3>
         <table style={tableStyle}>
           <thead>
             <tr>
@@ -345,8 +291,8 @@ function AGMForBallModeApp() {
                 if (hiddenRooms[i]) return null;
                 return (
                   <React.Fragment key={i}>
-                    <th style={headerStyle}>닉네임</th>
-                    <th style={headerStyle}>G핸디</th>
+                    <th style={{ ...headerStyle, width: colWidths.nickname }}>닉네임</th>
+                    <th style={{ ...headerStyle, width: colWidths.small }}>G핸디</th>
                   </React.Fragment>
                 );
               })}
@@ -357,14 +303,11 @@ function AGMForBallModeApp() {
               <tr key={rowIndex}>
                 {roomLabels.map((label, i) => {
                   if (hiddenRooms[i]) return null;
-                  const arr = roomAssignments[i] || [];
-                  const p = arr[rowIndex];
+                  const p = (roomAssignments[i] || [])[rowIndex];
                   return (
-                    <React.Fragment key={`${i}-${rowIndex}`}>
-                      <td style={baseCellStyle}>{p ? p.name : ""}</td>
-                      <td style={{ ...baseCellStyle, color: "blue" }}>
-                        {p ? displayGhandi(p.ghandi) : ""}
-                      </td>
+                    <React.Fragment key={i + "-" + rowIndex}>
+                      <td style={baseCellStyle}>{p?.name || ""}</td>
+                      <td style={{ ...baseCellStyle, color: 'blue' }}>{p ? displayGhandi(p.ghandi) : ""}</td>
                     </React.Fragment>
                   );
                 })}
@@ -373,21 +316,15 @@ function AGMForBallModeApp() {
           </tbody>
           <tfoot>
             <tr>
-              {roomLabels.map((label, i) => {
+              {roomLabels.map((_, i) => {
                 if (hiddenRooms[i]) return null;
                 const arr = roomAssignments[i] || [];
-                const sum = arr.reduce((acc, p) => {
-                  const sc = Number(scores[p.name] || 0) - Number(p.ghandi || 0);
-                  return acc + sc;
-                }, 0);
+                // → 순수 G핸디 값만 합산
+                const sum = arr.reduce((acc, p) => acc + Number(p.ghandi || 0), 0);
                 return (
                   <React.Fragment key={i}>
-                    <td style={{ ...footerStyle, textAlign: "center", color: "black" }}>
-                      합계
-                    </td>
-                    <td style={{ ...footerStyle, textAlign: "center", color: "blue" }}>
-                      {sum}
-                    </td>
+                    <td style={{ ...footerStyle, textAlign: "center", color: "black" }}>합계</td>
+                    <td style={{ ...footerStyle, textAlign: "center", color: "blue" }}>{sum}</td>
                   </React.Fragment>
                 );
               })}
@@ -728,33 +665,17 @@ function AGMForBallModeApp() {
       <h1 style={{ fontSize: "24px", margin: "8px 0" }}>{topTitle}</h1>
 
       {/* 상단 제어 영역 */}
-      <div style={{ marginBottom: 10, fontSize: "18px" }}>
-        <label>방 개수: </label>
-        <input
-          type="number"
-          min={1}
-          max={10}
-          value={roomCount}
-          onChange={e => setRoomCount(Number(e.target.value))}
-          style={{ width: 50, marginLeft: 6 }}
-        />
-        <input
-          key={uploadKey}
-          type="file"
-          accept=".xlsx"
-          onChange={handleExcelUpload}
-          style={{ marginLeft: 10 }}
-        />
-        <button onClick={autoAssignAGM} style={{ marginLeft: 10, fontSize: "16px" }}>
-          자동배정
-        </button>
-        <button onClick={clearAGM} style={{ marginLeft: 10, fontSize: "16px" }}>
-          클리어
-        </button>
-      </div>
+      <ControlPanel
+  roomCount={roomCount}
+  onRoomCountChange={setRoomCount}
+  uploadKey={uploadKey}
+  onExcelUpload={handleExcelUpload}
+  onAutoAssign={autoAssignAGM}    // AGM 모드의 자동배정 함수
+  onClear={clearAGM}              // AGM 모드의 클리어 함수
+/>
 
       {/* 방 이름 수정 및 숨김 토글 */}
-      <div style={{ marginBottom: 20, fontSize: "18px" }}>
+      <div style={{ marginBottom: 20, fontSize: "18px", display: "flex", flexDirection: "column", alignItems: "center" }}>
         <h3>🏷 방 이름 수정</h3>
         {roomLabels.map((label, i) => (
           <div
@@ -784,7 +705,7 @@ function AGMForBallModeApp() {
       </div>
 
       {/* 참가자 입력 */}
-      <div style={{ fontSize: "18px" }}>
+      <div style={{ fontSize: "18px", display: "flex", flexDirection: "column", alignItems: "center" }}>
         <h3>👥 참가자 입력 (조: 1이면 1조, 2이면 2조)</h3>
         {participants.map((p, i) => {
           const isGroup1 = p.group === 1;
@@ -853,23 +774,32 @@ function AGMForBallModeApp() {
       </div>
 
       {/* 하단 표 출력 영역 */}
-      <div style={{ marginTop: 30, fontSize: "18px" }}>
+      <div style={{ marginTop: 30, fontSize: "18px", textAlign: 'center' }}>
         <h3>📊 추가 출력 (표)</h3>
         <div style={{ marginBottom: 10 }}>
-          <button onClick={() => setTableView("allocation")} style={{ fontSize: "16px", marginRight: 6 }}>
+          <button
+            onClick={() => setTableView("allocation")}
+            style={{ fontSize: "16px", marginRight: 6 }}
+          >
             방배정표
           </button>
-          <button onClick={() => setTableView("final")} style={{ fontSize: "16px", marginRight: 6 }}>
+          <button
+            onClick={() => setTableView("final")}
+            style={{ fontSize: "16px", marginRight: 6 }}
+          >
             최종결과표
           </button>
-          <button onClick={() => setTableView("team")} style={{ fontSize: "16px", marginLeft: 10 }}>
+          <button
+            onClick={() => setTableView("team")}
+            style={{ fontSize: "16px", marginLeft: 10 }}
+          >
             팀결과표
           </button>
         </div>
         <div style={tableContainerStyle}>
           {tableView === "allocation" && renderAllocationTable()}
-          {tableView === "final" && renderFinalResultTable()}
-          {tableView === "team" && renderTeamResultTable()}
+          {tableView === "final"      && renderFinalResultTable()}
+          {tableView === "team"       && renderTeamResultTable()}
         </div>
       </div>
     </div>
