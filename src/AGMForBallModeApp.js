@@ -4,7 +4,9 @@ import React, { useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 
 // 분리된 컴포넌트들
-// ControlPanel, AllocationTable, ResultTable, TeamResultTable 모두 사용하지 않으므로 삭제
+import { ControlPanel } from './components/ControlPanel';
+import { AllocationTable } from './components/AllocationTable';
+import { ResultTable, TeamResultTable } from './components/ResultTable';
 
 // 공통 스타일 & 헬퍼 함수 import
 import {
