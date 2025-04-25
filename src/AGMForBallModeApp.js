@@ -9,7 +9,6 @@ import { ControlPanel } from './components/ControlPanel';
 
 // 공통 스타일 & 헬퍼 함수 import
 import {
-  containerStyle,
   tableContainerStyle,
   tableStyle,
   baseCellStyle,
@@ -138,7 +137,11 @@ function AGMForBallModeApp() {
       alert("모든 방이 가득 찼습니다.");
       return;
     }
-    setLoadingIndex({ idx, type: "room" });
+  // 1) 로딩 인덱스 세팅
+  setLoadingIndex({ idx, type: "room" });
+
+  // 2) 1.2초 뒤에 실제 배정 처리 & 버튼 토글 & 스피너 해제
+  setTimeout(() => {
     const r = shuffle(availableRooms)[0];
     setRoomAssignments(prev => {
       const copy = [...prev];
@@ -149,10 +152,9 @@ function AGMForBallModeApp() {
       ...prev,
       [idx]: { ...(prev[idx] || {}), room: true }
     }));
-    setTimeout(() => {
-      setLoadingIndex(null);
-      alert("방 선택 완료! 이제 '팀원 선택' 버튼을 눌러주세요.");
-    }, 1200);
+    setLoadingIndex(null);
+    alert("방 선택 완료! 이제 '팀원 선택' 버튼을 눌러주세요.");
+  }, 1200);
   };
 
   // ---------------------------
@@ -222,52 +224,12 @@ function AGMForBallModeApp() {
     alert("자동 배정 완료! 수동 배정 내용은 유지하고 나머지를 자동 배정했습니다.");
   };
 
-  // ---------------------------
-  // 간단 합계 출력
-  // ---------------------------
-  function renderSimpleAssignmentResult() {
-    return (
-      <div className="result-container">
-        {roomLabels.map((label, i) => {
-          if (hiddenRooms[i]) return null;
-          const arr = roomAssignments[i] || [];
-          const sum = arr.reduce((acc, p) => {
-            const sc = Number(scores[p.name] || 0);
-            return acc + (sc - Number(p.ghandi || 0));
-          }, 0);
-          return (
-            <div key={i} className="result-box" style={{
-              display: 'inline-block',
-              border: '1px solid #aaa',
-              padding: 10,
-              margin: 10,
-              textAlign: 'left'
-            }}>
-              <strong>{label} (총점: {sum})</strong>
-              <ul style={{ marginTop: 5 }}>
-                {arr.length ? arr.map((p, idx) => {
-                  const sc = Number(scores[p.name] || 0);
-                  const r = sc - Number(p.ghandi || 0);
-                  return (
-                    <li key={idx}>
-                      {p.name} | 조: {p.group} | G핸디: {p.ghandi} | 스코어: {sc >= 0 ? "+"+sc : sc} | 결과: {r >= 0 ? "+"+r : r}
-                    </li>
-                  );
-                }) : <li>아직 없음</li>}
-              </ul>
-            </div>
-          );
-        })}
-      </div>
-    );
-  }
-
   // ----------------------------
   // 수정된 부분: G핸디 순수 합산
   // ----------------------------
   function renderAllocationTable() {
     return (
-      <div style={tableContainerStyle}>
+      <div style={{ ...tableContainerStyle, overflowX: "auto" }}>
         <h3>방배정표 (AGM 포볼 모드)</h3>
         <table style={tableStyle}>
           <thead>
@@ -400,7 +362,7 @@ function AGMForBallModeApp() {
     });
 
     return (
-      <div style={tableContainerStyle}>
+      <div style={{ ...tableContainerStyle, overflowX: "auto" }}>
         <h3>최종결과표 (스트로크 방식)</h3>
         <div style={{ marginBottom: 10, fontSize: "16px" }}>
           <h4>방별 표시/숨김</h4>
@@ -606,7 +568,7 @@ function AGMForBallModeApp() {
       });
 
     return (
-      <div style={tableContainerStyle}>
+      <div style={{ ...tableContainerStyle, overflowX: "auto" }}>
         <h3>팀결과표 (포볼, 병합 적용)</h3>
         {rows.length === 0 ? (
           <p>아직 팀 구성 없음</p>
@@ -755,17 +717,29 @@ function AGMForBallModeApp() {
   {/* 1조: 방선택 버튼 */}
   {p.group === 1 && (
     <>
+    <button
+      disabled={
+        buttonClicked[i]?.room ||
+        (loadingIndex?.idx === i && loadingIndex.type === 'room')
+      }
+      onClick={() => handleRoomSelect(i)}
+      className="assign-btn"
+    >
+      {loadingIndex?.idx === i && loadingIndex.type === 'room'
+        ? <span className="spinner" />
+        : '방선택'}
+    </button>
       <button
-        onClick={() => handleRoomSelect(i)}
-        disabled={buttonClicked[i]?.room}
-      >
-        방선택
-      </button>
-      <button
-        onClick={() => handleTeamSelect(i)}
-        disabled={buttonClicked[i]?.team}
-      >
-        팀원선택
+  disabled={
+    buttonClicked[i]?.team || 
+    (loadingIndex?.idx === i && loadingIndex.type === 'team')
+  }
+  onClick={() => handleTeamSelect(i)}
+  className="assign-btn"
+>
+  {loadingIndex?.idx === i && loadingIndex.type==='team'
+    ? <span className="spinner" />
+    : '팀원선택'}
       </button>
     </>
   )}

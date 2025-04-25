@@ -509,7 +509,7 @@ function StrokeModeApp() {
   // ==============================================
   function renderAllocationTable() {
     return (
-      <div style={tableContainerStyle}>
+      <div style={{ ...tableContainerStyle, overflowX: "auto" }}>
         <h3>방배정표</h3>
         {/* 기존 코드 그대로 유지 */}
         <table style={tableStyle}>
@@ -583,9 +583,21 @@ function StrokeModeApp() {
   }
 
   function renderFinalResultTable() {
-    // 여기서는 사용하지 않고, 
-    // 최종결과표는 아래 FinalResultTable 컴포넌트로 대체
-    return null;
+    return (
+      <div style={{ ...tableContainerStyle, overflowX: "auto" }}>
+        <FinalResultTable
+          rooms={assigned}
+          scores={scores}
+          roomLabels={roomLabels}
+          hiddenRooms={hiddenRooms}
+          showScore={showScore}
+          showBanddang={showBanddang}
+          toggleRoomVisibility={toggleRoomVisibility}
+          setShowScore={setShowScore}
+          setShowBanddang={setShowBanddang}
+        />
+      </div>
+    );
   }
 
   return (
@@ -681,10 +693,13 @@ function StrokeModeApp() {
 
   {/* 방배정 버튼 */}
   <button
-    disabled={buttonClicked[i]}
-    onClick={() => assignIndividual(i)}
-  >
-    방배정
+  disabled={buttonClicked[i] || loadingIndex === i}
+  onClick={() => assignIndividual(i)}
+  className="assign-btn"
+>
+  {loadingIndex === i
+    ? <span className="spinner" />    // ↙ 여기에 스피너
+    : '방배정'}
   </button>
 
   {/* 강제배정 select */}
