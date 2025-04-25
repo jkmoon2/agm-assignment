@@ -1,3 +1,22 @@
+/* 제어판을 반응형으로 가로/세로 전환 */
+.control-panel {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+/* 휴대폰(≤480px)에서는 세로 스택 */
+@media (max-width: 480px) {
+  .control-panel {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+.container {
+  padding: 16px;
+  text-align: center;
+}
+
 .App {
   text-align: center;
 }
@@ -13,15 +32,19 @@
   }
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
+.app-header {
   display: flex;
-  flex-direction: column;
+  justify-content: flex-end;
   align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+  padding: 8px 16px;
+  font-size: 14px;
+}
+.app-header .profile {
+  margin-right: 12px;
+}
+.app-header button {
+  font-size: 14px;
+  padding: 4px 8px;
 }
 
 .App-link {
@@ -35,4 +58,139 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+/* 1) 기본 폰트·패딩 조정 (모바일 우선) */
+body {
+  font-size: 16px;
+  margin: 0;
+  padding: 0;
+}
+.container {
+  padding: 16px;
+}
+
+/* 2) 버튼·입력 최소 터치 영역 확보 */
+h1, h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+button, input[type="number"], input[type="text"], input[type="file"] {
+  font-size: 1rem;
+  padding: 0.5rem 1rem;
+  min-height: 44px;
+}
+
+/* ================================================================= */
+/* 3) 태블릿 이하 (max-width:768px) */
+@media (max-width: 768px) {
+  .container {
+    padding: 12px;
+  }
+  .table-container {
+    overflow-x: auto;
+  }
+  table {
+    font-size: 0.9rem;
+  }
+}
+
+/* ================================================================= */
+/* 4) 휴대폰 이하 (max-width:480px) */
+@media (max-width: 480px) {
+  h1 { font-size: 1.25rem; }
+  button, input { 
+    font-size: 0.9rem; 
+    padding: 0.6rem;
+  }
+
+  /* 제어판(방 개수, 버튼) 가로→세로 */
+  .control-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .control-panel > * {
+    width: 100% !important;
+  }
+
+  /* 참가자 입력 줄: 가로→세로 & 풀폭 */
+  .participant-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .participant-row > * {
+    width: 100% !important;
+  }
+}
+
+/* 참가자 입력 줄: 기본 가로 flex */
+.participant-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+/* 휴대폰(≤480px)에서는 세로 스택, 풀폭 입력 */
+@media (max-width: 480px) {
+  .participant-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .participant-row > * {
+    width: 100% !important;
+  }
+}
+
+/* 전체 컨테이너 중앙 정렬 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+/* 헤더: 좌측 프로필, 우측 인증 버튼 */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+/* 프로필 영역 (로그인 시만 표시) */
+.profile {
+  display: flex;
+  align-items: center;
+}
+
+/* 인증 버튼 영역 */
+.auth-button button {
+  font-size: 14px;
+  padding: 6px 12px;
+}
+
+/* 관리자 링크 */
+.admin-link {
+  text-align: right;
+  margin-bottom: 20px;
+}
+.admin-link a {
+  font-size: 16px;
+  text-decoration: none;
+  color: #333;
+}
+
+/* 홈 화면 중앙 정렬 */
+.home {
+  text-align: center;
+  margin-top: 40px;
+}
+.home h1 {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+.home p {
+  font-size: 16px;
 }

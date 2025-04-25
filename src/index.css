@@ -1,9 +1,140 @@
-body {
-  margin: 0;
-  padding: 0;
-  font-family: sans-serif;
+/* 1) 전체 컨테이너 중앙 정렬 + 패딩 */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
 }
 
-h1, h2, h3 {
-  margin: 0.5em 0;
+/* 2) 참가자 입력 줄 flexbox */
+.participant-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+/* 3) responsive: 화면이 600px 미만이면 participant-row 세로 정렬 */
+@media (max-width: 600px) {
+  .participant-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* 4) 버튼 / 입력 크기 조절 */
+.participant-row input,
+.participant-row button {
+  font-size: 14px;
+}
+
+/* 5) ControlPanel 컴포넌트 레이아웃 */
+.control-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 16px;
+}
+@media (max-width: 600px) {
+  .control-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* 6) 결과 박스 컨테이너: 네 칸을 균등 분배 */
+.result-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: stretch;       /* <-- 추가: 같은 높이로 맞춰줌 */
+  justify-content: space-between;
+}
+
+/* 7) 결과 박스: flex 로 균등 분배 */
+.result-box {
+  flex: 1 1 calc(25% - 16px);  /* 네 칸일 때 각각 25% 너비(간격 제외) */
+  box-sizing: border-box;
+  border: 1px solid #aaa;
+  padding: 10px;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 내부 텍스트가 길 경우 줄바꿈 유지 */
+.result-box ul {
+  margin-top: 8px;
+  padding-left: 16px;
+}
+
+/* 8) 로그인/로그아웃 버튼 위치 조정 (전역 header 클래스가 없을 때만 예시) */
+header {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 20px;
+}
+
+header button {
+  font-size: 14px;
+  padding: 6px 12px;
+  cursor: pointer;
+}
+
+/* 1) 참가자 입력창 고정 너비 */
+.participant-row input[type="number"],
+.participant-row input[type="text"] {
+  flex: 0 0 120px;   /* 모두 120px 고정 */
+  box-sizing: border-box;
+}
+
+/* 2) 참가자 입력 버튼 고정 너비 */
+.participant-row button,
+.participant-row select {
+  flex: 0 0 100px;  /* 버튼/셀렉트도 100px 고정 */
+  box-sizing: border-box;
+}
+
+/* 3) 방배정 결과 박스 통일 */
+.result-container {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.result-box {
+  flex: 1 1 22%;     /* 4개 칸 기준 */
+  min-width: 200px;  /* 최소 너비 지정 */
+  border: 1px solid #aaa;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+/* 모든 input 박스 동일한 높이와 flex-basis 지정 */
+.participant-row input {
+  flex: 1 1 150px;    /* 최소 150px, 여유 있으면 늘어남 */
+  min-width: 150px;   /* 너무 작아지지 않도록 */
+  height: 36px;       /* 버튼과 높이 통일 */
+  box-sizing: border-box;
+}
+
+/* ‘조’ 입력 칸은 좀 좁게 */
+.participant-row input[type="number"] {
+  flex-basis: 80px;
+  min-width: 80px;
+}
+
+/* select(강제배정 등)도 높이 통일 */
+.participant-row select {
+  flex: 0 0 120px;    /* 고정 너비 */
+  height: 36px;
+  box-sizing: border-box;
+}
+
+/* 버튼도 동일 높이, 텍스트 줄바꿈 방지 */
+.participant-row button {
+  flex: 0 0 100px;    /* 고정 너비 */
+  height: 36px;
+  white-space: nowrap; /* 한 줄로 */
+  box-sizing: border-box;
 }

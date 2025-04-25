@@ -6,10 +6,20 @@ const LogoutButton = () => {
   const { logout } = useAuth0();
 
   return (
-    <button onClick={() => logout({
-      returnTo: window.location.origin,
-      federated: true
-    })}>
+    <button
+      onClick={() =>
+        logout({
+          // 로그아웃 후 무조건 /admin 으로 돌아가도록
+          returnTo: `${window.location.origin}/admin`,
+          federated: true
+        })
+      }
+      style={{
+        fontSize: 14,
+        padding: "6px 12px",
+        cursor: "pointer"
+      }}
+    >
       로그아웃
     </button>
   );

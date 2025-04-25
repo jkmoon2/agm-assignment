@@ -293,13 +293,13 @@ function StrokeModeApp() {
   const [buttonClicked, setButtonClicked] = useState({});
   const [uploadKey, setUploadKey] = useState(0);
   const [forceResetKey, setForceResetKey] = useState(0);
-  const [loadingIndex, setLoadingIndex] = useState(null);
   const [scores, setScores] = useState({});
   const [tableView, setTableView] = useState("none");
   const [roomLabels, setRoomLabels] = useState([]);
   const [hiddenRooms, setHiddenRooms] = useState({});
   const [showScore, setShowScore] = useState(true);
   const [showBanddang, setShowBanddang] = useState(true);
+  const [loadingIndex, setLoadingIndex] = useState(null);
 
   useEffect(() => {
     const defaultLabels = Array.from({ length: roomCount }, (_, i) => `${i + 1}번 방`);
@@ -589,7 +589,7 @@ function StrokeModeApp() {
   }
 
   return (
-    <div style={{ padding: 20 }}>
+    <div className="container">
       {/* 상단 제목 */}
       <div style={{ marginBottom: 10 }}>
         <label style={{ fontSize: '24px', fontWeight: 'bold' }}>페이지 제목: </label>
@@ -645,63 +645,70 @@ function StrokeModeApp() {
 
       {/* 참가자 입력 */}
       <div style={{ fontSize: '18px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <h3>👥 참가자 입력</h3>
-        {participants.map((p, i) => (
-          <div key={i} style={{ display: 'flex', gap: 6, marginBottom: 3 }}>
-            <input
-              placeholder="조"
-              type="number"
-              value={p.group}
-              onChange={(e) => handleInput(i, 'group', e.target.value)}
-              style={{ width: 40, fontSize: '16px' }}
-            />
-            <input
-              placeholder="닉네임"
-              value={p.name}
-              onChange={(e) => handleInput(i, 'name', e.target.value)}
-              style={{ width: 100, fontSize: '16px' }}
-            />
-            <input
-              placeholder="G핸디"
-              type="number"
-              value={p.ghandi}
-              onChange={(e) => handleInput(i, 'ghandi', e.target.value)}
-              style={{ width: 60, fontSize: '16px' }}
-            />
-            <input
-              placeholder="스코어(+/-)"
-              type="number"
-              value={scores[p.name ? p.name.trim().toLowerCase() : ''] || ''}
-              onChange={(e) => handleScoreChange(p.name, e.target.value)}
-              style={{ width: 80, fontSize: '16px' }}
-            />
-            <button disabled={buttonClicked[i]} onClick={() => assignIndividual(i)} style={{ fontSize: '16px' }}>
-              {loadingIndex === i ? '⏳ 배정 중...' : '방배정'}
-            </button>
-            <select
-              key={forceResetKey}
-              defaultValue=""
-              onChange={(e) => forceAssign(i, Number(e.target.value))}
-              style={{ fontSize: '16px' }}
-            >
-              <option value="">🔒강제배정</option>
-              {roomLabels.map((label, ridx) => (
-                <option key={ridx} value={ridx}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-        ))}
-      </div>
+  <h3>👥 참가자 입력</h3>
+  {participants.map((p, i) => (
+    <div className="participant-row" key={i}>
+  {/* 조 */}
+  <input
+    placeholder="조"
+    type="number"
+    value={p.group}
+    onChange={e => handleInput(i, 'group', e.target.value)}
+  />
+
+  {/* 닉네임 */}
+  <input
+    placeholder="닉네임"
+    value={p.name}
+    onChange={e => handleInput(i, 'name', e.target.value)}
+  />
+
+  {/* G핸디 */}
+  <input
+    placeholder="G핸디"
+    type="number"
+    value={p.ghandi}
+    onChange={e => handleInput(i, 'ghandi', e.target.value)}
+  />
+
+  {/* 스코어 */}
+  <input
+    placeholder="스코어"
+    type="number"
+    value={scores[p.name?.trim().toLowerCase()] || ''}
+    onChange={e => handleScoreChange(p.name, e.target.value)}
+  />
+
+  {/* 방배정 버튼 */}
+  <button
+    disabled={buttonClicked[i]}
+    onClick={() => assignIndividual(i)}
+  >
+    방배정
+  </button>
+
+  {/* 강제배정 select */}
+  <select
+    onChange={e => forceAssign(i, Number(e.target.value))}
+    defaultValue=""
+  >
+    <option value="">강제배정</option>
+    {roomLabels.map((label, ridx) => (
+      <option key={ridx} value={ridx}>{label}</option>
+    ))}
+  </select>
+</div>
+  ))}
+</div>
 
       {/* 방 배정 결과 (간단 합계) */}
       <div style={{ marginTop: 30, fontSize: '18px', textAlign: 'center' }}>
-        <h3>🏠 방 배정 결과 (간단 합계)</h3>
-        {roomLabels.map((label, i) => {
+      <h3>🏠 방 배정 결과 (간단 합계)</h3>
+      <div className="result-container">
+      {roomLabels.map((label, i) => {
           if (hiddenRooms[String(i)]) return null;
           return (
-            <div key={i} style={{ display: 'inline-block', border: '1px solid #aaa', padding: 10, margin: 10, textAlign: 'left' }}>
+            <div key={i} className="result-box">          
               <strong>{label} (총점: {calculateRoomTotal(assigned[i])})</strong>
               <ul style={{ marginTop: 5 }}>
                 {(assigned[i] || []).map((p, idx) => {
@@ -719,6 +726,7 @@ function StrokeModeApp() {
             </div>
           );
         })}
+      </div>
       </div>
 
       {/* 추가 출력 (표) */}

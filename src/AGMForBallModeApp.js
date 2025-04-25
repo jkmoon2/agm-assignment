@@ -227,7 +227,7 @@ function AGMForBallModeApp() {
   // ---------------------------
   function renderSimpleAssignmentResult() {
     return (
-      <div>
+      <div className="result-container">
         {roomLabels.map((label, i) => {
           if (hiddenRooms[i]) return null;
           const arr = roomAssignments[i] || [];
@@ -236,7 +236,7 @@ function AGMForBallModeApp() {
             return acc + (sc - Number(p.ghandi || 0));
           }, 0);
           return (
-            <div key={i} style={{
+            <div key={i} className="result-box" style={{
               display: 'inline-block',
               border: '1px solid #aaa',
               padding: 10,
@@ -650,10 +650,12 @@ function AGMForBallModeApp() {
   // 메인 렌더링
   // ---------------------------
   return (
-    <div style={containerStyle}>
+    <div className="container">
       {/* 페이지 제목 */}
       <div style={{ marginBottom: 10 }}>
-        <label style={{ fontSize: "24px", fontWeight: "bold" }}>페이지 제목: </label>
+        <label style={{ fontSize: "24px", fontWeight: "bold" }}>
+          페이지 제목:
+        </label>
         <input
           type="text"
           value={topTitle}
@@ -661,20 +663,29 @@ function AGMForBallModeApp() {
           style={{ fontSize: "24px", width: "400px", marginLeft: "10px" }}
         />
       </div>
+
       <h1 style={{ fontSize: "24px", margin: "8px 0" }}>{topTitle}</h1>
 
       {/* 상단 제어 영역 */}
       <ControlPanel
-  roomCount={roomCount}
-  onRoomCountChange={setRoomCount}
-  uploadKey={uploadKey}
-  onExcelUpload={handleExcelUpload}
-  onAutoAssign={autoAssignAGM}    // AGM 모드의 자동배정 함수
-  onClear={clearAGM}              // AGM 모드의 클리어 함수
-/>
+        roomCount={roomCount}
+        onRoomCountChange={setRoomCount}
+        uploadKey={uploadKey}
+        onExcelUpload={handleExcelUpload}
+        onAutoAssign={autoAssignAGM}
+        onClear={clearAGM}
+      />
 
-      {/* 방 이름 수정 및 숨김 토글 */}
-      <div style={{ marginBottom: 20, fontSize: "18px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+      {/* 방 이름 수정 & 숨김 토글 */}
+      <div
+        style={{
+          marginBottom: 20,
+          fontSize: "18px",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center"
+        }}
+      >
         <h3>🏷 방 이름 수정</h3>
         {roomLabels.map((label, i) => (
           <div
@@ -689,13 +700,15 @@ function AGMForBallModeApp() {
                 onChange={e => handleRoomLabelChange(i, e.target.value)}
                 style={{ width: "180px", fontSize: "16px" }}
               />
-              &nbsp;(현재 {roomAssignments[i] ? roomAssignments[i].length : 0}명)
+              &nbsp;(현재 {roomAssignments[i]?.length || 0}명)
             </label>
             <label style={{ fontSize: "14px" }}>
               <input
                 type="checkbox"
                 checked={!hiddenRooms[i]}
-                onChange={() => setHiddenRooms(prev => ({ ...prev, [i]: !prev[i] }))}
+                onChange={() =>
+                  setHiddenRooms(prev => ({ ...prev, [i]: !prev[i] }))
+                }
               />
               표시
             </label>
@@ -704,76 +717,103 @@ function AGMForBallModeApp() {
       </div>
 
       {/* 참가자 입력 */}
-      <div style={{ fontSize: "18px", display: "flex", flexDirection: "column", alignItems: "center" }}>
-        <h3>👥 참가자 입력 (조: 1이면 1조, 2이면 2조)</h3>
-        {participants.map((p, i) => {
-          const isGroup1 = p.group === 1;
-          const clickedRoom = buttonClicked[i]?.room;
-          const clickedTeam = buttonClicked[i]?.team;
-          return (
-            <div key={i} style={{ display: "flex", gap: 6, marginBottom: 3 }}>
-              <input
-                placeholder="조"
-                type="number"
-                value={p.group}
-                onChange={e => handleInput(i, "group", e.target.value)}
-                style={{ width: 40, fontSize: "16px" }}
-              />
-              <input
-                placeholder="닉네임"
-                value={p.name}
-                onChange={e => handleInput(i, "name", e.target.value)}
-                style={{ width: 100, fontSize: "16px" }}
-              />
-              <input
-                placeholder="G핸디"
-                type="number"
-                value={p.ghandi}
-                onChange={e => handleInput(i, "ghandi", e.target.value)}
-                style={{ width: 60, fontSize: "16px" }}
-              />
-              <input
-                placeholder="스코어(+/-)"
-                type="number"
-                value={scores[p.name] || ""}
-                onChange={e => handleScoreChange(p.name, e.target.value)}
-                style={{ width: 80, fontSize: "16px" }}
-              />
-              {isGroup1 && (
-                <>
-                  <button
-                    disabled={clickedRoom}
-                    onClick={() => handleRoomSelect(i)}
-                    style={{ fontSize: "16px" }}
-                  >
-                    {loadingIndex && loadingIndex.idx === i && loadingIndex.type === "room"
-                      ? "⏳ 배정 중..."
-                      : "방 선택"}
-                  </button>
-                  <button
-                    disabled={clickedTeam}
-                    onClick={() => handleTeamSelect(i)}
-                    style={{ fontSize: "16px" }}
-                  >
-                    {loadingIndex && loadingIndex.idx === i && loadingIndex.type === "team"
-                      ? "⏳ 배정 중..."
-                      : "팀원 선택"}
-                  </button>
-                </>
-              )}
-            </div>
-          );
-        })}
-      </div>
+      <div
+  style={{
+    fontSize: "18px",
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+  }}
+>
+  <h3>👥 참가자 입력 (조: 1이면 1조, 2이면 2조)</h3>
+  {participants.map((p, i) => (
+    <div className="participant-row" key={i}>
+  <input
+    placeholder="조"
+    type="number"
+    value={p.group}
+    onChange={e => handleInput(i, 'group', e.target.value)}
+  />
+  <input
+    placeholder="닉네임"
+    value={p.name}
+    onChange={e => handleInput(i, 'name', e.target.value)}
+  />
+  <input
+    placeholder="G핸디"
+    type="number"
+    value={p.ghandi}
+    onChange={e => handleInput(i, 'ghandi', e.target.value)}
+  />
+  <input
+    placeholder="스코어"
+    type="number"
+    value={scores[p.name?.trim().toLowerCase()] || ''}
+    onChange={e => handleScoreChange(p.name, e.target.value)}
+  />
+
+  {/* 1조: 방선택 버튼 */}
+  {p.group === 1 && (
+    <>
+      <button
+        onClick={() => handleRoomSelect(i)}
+        disabled={buttonClicked[i]?.room}
+      >
+        방선택
+      </button>
+      <button
+        onClick={() => handleTeamSelect(i)}
+        disabled={buttonClicked[i]?.team}
+      >
+        팀원선택
+      </button>
+    </>
+  )}
+</div>
+  ))}
+</div>
 
       {/* 간단 합계 */}
-      <div style={{ marginTop: 30 }}>
-        <h3>🏠 방 배정 결과 (간단 합계)</h3>
-        {renderSimpleAssignmentResult()}
-      </div>
+      <div style={{ marginTop: 30, textAlign: 'center' }}>
+  <h3>🏠 방 배정 결과 (간단 합계)</h3>
+  <div className="result-container">
+    {roomLabels.map((label, i) => {
+      if (hiddenRooms[i]) return null;
+      const list = roomAssignments[i] || [];
+      // 총점 계산
+      const total = list.reduce(
+        (acc, p) => acc + (Number(scores[p.name?.trim().toLowerCase()]||0) - Number(p.ghandi||0)),
+        0
+      );
+      return (
+        <div key={i} className="result-box">
+          <strong>
+            {label} (총점: {total})
+          </strong>
+          <ul style={{ marginTop: 5, textAlign: 'left' }}>
+            {list.length
+              ? list.map((p, idx) => {
+                  const sc = Number(scores[p.name?.trim().toLowerCase()]||0);
+                  const res = sc - Number(p.ghandi||0);
+                  return (
+                    <li key={idx}>
+                      {p.name} | 조: {p.group} | G핸디: {p.ghandi >= 0 ? '+'+p.ghandi : p.ghandi}
+                      {' '}| 스코어: {sc >= 0 ? '+'+sc : sc}
+                      {' '}| 결과: {res >= 0 ? '+'+res : res}
+                    </li>
+                  );
+                })
+              : <li>⏳ 아직 없음</li>
+            }
+          </ul>
+        </div>
+      );
+    })}
+  </div>
+</div>
 
       {/* 하단 표 출력 영역 */}
-      <div style={{ marginTop: 30, fontSize: "18px", textAlign: 'center' }}>
+      <div style={{ marginTop: 30, fontSize: "18px", textAlign: "center" }}>
         <h3>📊 추가 출력 (표)</h3>
         <div style={{ marginBottom: 10 }}>
           <button
@@ -790,15 +830,15 @@ function AGMForBallModeApp() {
           </button>
           <button
             onClick={() => setTableView("team")}
-            style={{ fontSize: "16px", marginLeft: 10 }}
+            style={{ fontSize: "16px" }}
           >
             팀결과표
           </button>
         </div>
         <div style={tableContainerStyle}>
           {tableView === "allocation" && renderAllocationTable()}
-          {tableView === "final"      && renderFinalResultTable()}
-          {tableView === "team"       && renderTeamResultTable()}
+          {tableView === "final" && renderFinalResultTable()}
+          {tableView === "team" && renderTeamResultTable()}
         </div>
       </div>
     </div>
